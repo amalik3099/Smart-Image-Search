@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:,">
+
+    <!-- API Gateway SDK -->
+    <script type="text/javascript" src="apiGateway-js-sdk/lib/axios/dist/axios.standalone.js"></script>
+    <script type="text/javascript" src="apiGateway-js-sdk/lib/CryptoJS/rollups/hmac-sha256.js"></script>
+    <script type="text/javascript" src="apiGateway-js-sdk/lib/CryptoJS/rollups/sha256.js"></script>
+    <script type="text/javascript" src="apiGateway-js-sdk/lib/CryptoJS/components/hmac.js"></script>
+    <script type="text/javascript" src="apiGateway-js-sdk/lib/CryptoJS/components/enc-base64.js"></script>
+    <script type="text/javascript" src="apiGateway-js-sdk/lib/url-template/url-template.js"></script>
+    <script type="text/javascript" src="apiGateway-js-sdk/lib/apiGatewayCore/sigV4Client.js"></script>
+    <script type="text/javascript" src="apiGateway-js-sdk/lib/apiGatewayCore/apiGatewayClient.js"></script>
+    <script type="text/javascript" src="apiGateway-js-sdk/lib/apiGatewayCore/simpleHttpClient.js"></script>
+    <script type="text/javascript" src="apiGateway-js-sdk/lib/apiGatewayCore/utils.js"></script>
+    <script type="text/javascript" src="apiGateway-js-sdk/apigClient.js"></script>
+
+    <!-- JQuery -->
+    <script src="http://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.0/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <!-- bootstrap  -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css">
+    <!-- JavaScript file -->
+    <script type="text/javascript" src="script.js"></script>
+    <!-- CSS file -->
+    <link href="https://fonts.googleapis.com/css?family=Anton|Cute+Font|Montserrat|Patua+One" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="main.css">
+
+    <title>Photo Album</title>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark justify-content-between">
+        <a class="navbar-brand">AWS Photo Album</a>
+    </nav>
+
+    <div class="container">
+        <p>Upload a photo to the album</p>
+        <form class="upload_form">
+            <div class="input-group">
+                <div class="custom-file">
+                    <input type="file" class="custom-file-input" accept="image/jpg" id="inputFile" onchange="image_preview()">
+                    <label class="custom-file-label" for="inputFile">Select photo</label>
+                </div>
+                <div class="input-group-append">
+                    <button class="btn btn-primary" type="button" onclick="uploadImage()">Upload</button>
+                </div>
+            </div>
+        </form>
+        <div id="show_upload">
+            <!-- append uploaded image to this div to preview -->
+            <!-- remove the temporary pic below -->
+            <img id='preview_image' src="https://ggsc.s3.amazonaws.com/images/uploads/The_Science-Backed_Benefits_of_Being_a_Dog_Owner.jpg">
+        </div><br>
+        <p>Search for any photos from the album</p>
+        <form class="search_photo">
+            <div class="input-group">
+                <div class="input-group-append">
+                    <button id=record class="btn btn-danger" type="button" onclick="speech_recognition()">
+                        <i class="fa fa-microphone"></i></button>
+                </div>
+                <input id='search_query' type="text" class="form-control" placeholder="Enter search term here">
+                <div class="input-group-append">
+                    <button class="btn btn-primary" type="button" onclick="searchImages()">Search</button>
+                </div>
+            </div>
+        </form>
+        <div id="searched_photos">
+            <!-- append searched images to this div to preview -->
+            <!-- remove the temporary pic below -->
+            <img id='temp_pic' src="https://ggsc.s3.amazonaws.com/images/uploads/The_Science-Backed_Benefits_of_Being_a_Dog_Owner.jpg">
+        </div><br>
+    </div>
+</body>
+
+</html>

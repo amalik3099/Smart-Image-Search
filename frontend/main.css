@@ -1,0 +1,27 @@
+.navbar-brand {
+    font-size: 25px;
+    color: whitesmoke !important;
+    margin: 0 auto;
+}
+.container {
+    margin-top: 30px;
+}
+#upload_btn {
+    margin-top: 15px;
+}
+#upload_div {
+    display: inline-block;
+}
+#show_upload {
+    margin-top: 20px;
+}
+#preview_image {
+    width: 400px;
+    height: 300px;
+    margin-bottom: 10px;
+}
+#temp_pic {
+    width: 400px;
+    height: 300px;
+    margin-bottom: 10px;
+}

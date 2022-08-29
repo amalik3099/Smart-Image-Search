@@ -1,0 +1,195 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  GHRepo:
+    Type: String
+    Default: "Smart-Image-Search"
+
+  GHUser:
+    Type: String
+    Default: "aadilmehdis"
+
+  S3GHBranch:
+    Type: String
+    Default: "frontend"
+
+  GHToken:
+    Type: String
+    Default: "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"
+
+  LFGHBranch:
+    Type: String
+    Default: "lambdas"
+
+Resources:
+  AdminRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - cloudformation.amazonaws.com
+                - codepipeline.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Path: /
+      Policies:
+        - PolicyName: admin
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: "*"
+                Resource: "*"
+
+  SmartPhotoAlbumApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: Smart Photo Album
+      Description: Smart Photo Album API
+      BodyS3Location: 
+        Bucket: "api-cf-bucket"
+        ETag: "7544913581ac4f98b8741c706624b27a"
+        Key: "AI Photo Search-dev-3-swagger-apigateway.yaml"
+
+  ArtifactS3:
+    Type: "AWS::S3::Bucket"
+
+  FrontendS3:
+    Type: "AWS::S3::Bucket"
+
+  PipelineLF:
+    Type: "AWS::CodePipeline::Pipeline"
+    Properties:
+      RoleArn: !GetAtt AdminRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ArtifactS3
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Provider: GitHub
+                Version: "1"
+              RunOrder: 1
+              Configuration:
+                Repo: !Ref GHRepo
+                Owner: !Ref GHUser
+                Branch: !Ref LFGHBranch
+                OAuthToken: !Ref GHToken
+                PollForSourceChanges: "true"
+              OutputArtifacts:
+                - Name: SourceArtifact
+              InputArtifacts: []
+              Region: "us-east-1"
+              Namespace: SourceVariables
+        - Name: Build
+          Actions:
+            - Name: Build
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: "1"
+              RunOrder: 2
+              Configuration:
+                ProjectName: "lambdaBuildProject"
+              OutputArtifacts:
+                - Name: BuildArtifact
+              InputArtifacts:
+                - Name: SourceArtifact
+              Region: "us-east-1"
+              Namespace: BuildVariables
+        - Name: Deploy
+          Actions:
+            - Name: Deploy
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: "1"
+              RunOrder: 3
+              Configuration:
+                ActionMode: CHANGE_SET_REPLACE
+                Capabilities: CAPABILITY_IAM,CAPABILITY_AUTO_EXPAND
+                ChangeSetName: "A2lambda-changeset"
+                RoleArn: !GetAtt AdminRole.Arn
+                StackName: "lambdaStack"
+                TemplatePath: BuildArtifact::outputsamtemplate.yml
+              OutputArtifacts: []
+              InputArtifacts:
+                - Name: BuildArtifact
+              Region: us-east-1
+              Namespace: DeployVariables
+
+  PipelineS3:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      ArtifactStore: 
+        Location: !Ref ArtifactS3
+        Type: S3
+      RoleArn: !GetAtt AdminRole.Arn
+      Stages:
+        - Name: Source
+          Actions: 
+            - Name: Source
+              ActionTypeId: 
+                Category: Source
+                Owner: ThirdParty
+                Version: 1
+                Provider: GitHub
+              Configuration:
+                Repo: !Ref GHRepo
+                Owner: !Ref GHUser
+                Branch: !Ref S3GHBranch
+                OAuthToken: !Ref GHToken
+                PollForSourceChanges: false
+              OutputArtifacts:
+                - Name: SourceArtifact
+              RunOrder: 1 
+
+        - Name: Deploy
+          Actions:
+            - Name: Deploy
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: S3
+              Configuration:
+                BucketName: !Ref FrontendS3
+                Extract: true
+              InputArtifacts:
+                - Name: SourceArtifact
+              RunOrder: 1
+
+
+  OS:
+    Type: AWS::OpenSearchService::Domain
+    Properties: 
+      AccessPolicies:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              AWS: "614741084428"
+            Action: "es:*"
+            Resource: "arn:aws:es:us-east-1:614741084428:domain/photosdomain/*"
+      ClusterConfig:
+        DedicatedMasterEnabled: "false"
+        InstanceCount: "1"
+        ZoneAwarenessEnabled: "false" 
+        InstanceType: t3.small.search
+      DomainName: "photosdomain"
+      EBSOptions: 
+        EBSEnabled: true
+        Iops: 0
+        VolumeSize: 10
+        VolumeType: "gp2"
+      EngineVersion: OpenSearch_1.0
